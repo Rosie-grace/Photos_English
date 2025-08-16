@@ -1,0 +1,131 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Updated color tokens for English vocabulary learning theme */
+  --background: #ffffff; /* Clean white background for learning */
+  --foreground: #374151; /* Dark gray text for readability */
+  --card: #fefce8; /* Light amber card background for warmth */
+  --card-foreground: #374151; /* Dark text on cards */
+  --popover: #ffffff; /* White popover background */
+  --popover-foreground: #374151; /* Text color for popovers */
+  --primary: #d97706; /* Amber primary for learning actions */
+  --primary-foreground: #ffffff; /* White text on primary buttons */
+  --secondary: #8b5cf6; /* Purple secondary for variety */
+  --secondary-foreground: #ffffff; /* White text on secondary elements */
+  --muted: #f1f5f9; /* Light slate for muted elements */
+  --muted-foreground: #374151; /* Dark text for muted elements */
+  --accent: #8b5cf6; /* Purple accent for progress and highlights */
+  --accent-foreground: #ffffff; /* White text on accent elements */
+  --destructive: #ef4444; /* Red for error/reset actions */
+  --destructive-foreground: #ffffff; /* White text on destructive elements */
+  --border: #e5e7eb; /* Light gray border for separation */
+  --input: #f3f4f6; /* Light gray input fields background */
+  --ring: #d97706; /* Amber focus ring */
+  --chart-1: #d97706;
+  --chart-2: #8b5cf6;
+  --chart-3: #6b7280;
+  --chart-4: #1f2937;
+  --chart-5: #fefce8;
+  --radius: 0.5rem; /* Rounded corners */
+  --sidebar: #f3f4f6;
+  --sidebar-foreground: #374151;
+  --sidebar-primary: #d97706;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #8b5cf6;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: #d97706;
+  /* Added custom font variables for romantic typography */
+  --font-heading: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+}
+
+.dark {
+  /* Updated dark mode colors for learning theme */
+  --background: #1f2937; /* Dark gray background */
+  --foreground: #f9fafb; /* Light text */
+  --card: #374151; /* Dark card background */
+  --card-foreground: #f9fafb; /* Light text on cards */
+  --popover: rgba(55, 65, 81, 0.95); /* Dark popover */
+  --popover-foreground: #f9fafb; /* Light text on popovers */
+  --primary: #f59e0b; /* Lighter amber for dark mode */
+  --primary-foreground: #1f2937; /* Dark text on primary */
+  --secondary: #a855f7; /* Lighter purple for dark mode */
+  --secondary-foreground: #ffffff; /* White text on secondary */
+  --muted: #4b5563; /* Dark muted background */
+  --muted-foreground: #9ca3af; /* Light gray muted text */
+  --accent: #a855f7; /* Lighter purple accent */
+  --accent-foreground: #ffffff; /* White text on accent */
+  --destructive: #ef4444; /* Red for dark mode */
+  --destructive-foreground: #f9fafb; /* Light text on destructive */
+  --border: #4b5563; /* Dark border */
+  --input: #374151; /* Dark input background */
+  --ring: rgba(245, 158, 11, 0.5); /* Amber focus ring for dark mode */
+  --chart-1: #f59e0b;
+  --chart-2: #a855f7;
+  --chart-3: #9ca3af;
+  --chart-4: #f9fafb;
+  --chart-5: #374151;
+  --sidebar: #1f2937;
+  --sidebar-foreground: #f9fafb;
+  --sidebar-primary: #f59e0b;
+  --sidebar-primary-foreground: #1f2937;
+  --sidebar-accent: #a855f7;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #4b5563;
+  --sidebar-ring: rgba(245, 158, 11, 0.5);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  /* Updated font variables for learning website */
+  --font-heading: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
