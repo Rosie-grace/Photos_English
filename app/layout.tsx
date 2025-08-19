@@ -18,8 +18,8 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "英语单词翻牌记忆 - 互动学习平台",
-  description: "通过翻牌游戏学习英语单词，提高词汇记忆效率的互动学习网站",
+  title: "英语单词抽卡记忆 - 互动学习平台",
+  description: "通过抽卡游戏学习英语单词，提高词汇记忆效率的互动学习网站",
   generator: "v0.app",
 }
 

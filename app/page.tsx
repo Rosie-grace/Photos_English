@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -453,6 +453,200 @@ export default function FlashcardPage() {
   const [isCorrect, setIsCorrect] = useState(false)
   const [learnedWords, setLearnedWords] = useState<number[]>([])
 
+  // Weather & Quote states
+  const [quote, setQuote] = useState<string>("")
+  const [quoteAuthor, setQuoteAuthor] = useState<string>("")
+  const [weather, setWeather] = useState<
+    | {
+        temperature: number
+        weatherCode: number
+        windspeed?: number
+        city?: string
+      }
+    | null
+  >(null)
+
+  const weatherCodeMap: Record<number, string> = {
+    0: "晴",
+    1: "多云",
+    2: "部分多云",
+    3: "阴",
+    45: "有雾",
+    48: "雾凇",
+    51: "小毛毛雨",
+    53: "中毛毛雨",
+    55: "大毛毛雨",
+    61: "小雨",
+    63: "中雨",
+    65: "大雨",
+    71: "小雪",
+    73: "中雪",
+    75: "大雪",
+    80: "阵雨",
+    81: "强阵雨",
+    82: "暴阵雨",
+    95: "雷雨",
+    96: "雷雨伴轻微冰雹",
+    99: "雷雨伴冰雹",
+  }
+
+  // Quote formatting helpers
+  const formatQuote = (raw: string): string => {
+    let text = (raw || "").trim().replace(/\s+/g, " ")
+    if (!text) return "保持热爱，奔赴山海。"
+    const endsWithPunct = /[\.!?。！？…]$/.test(text)
+    if (!endsWithPunct) {
+      const hasCJK = /[\u4e00-\u9fff]/.test(text)
+      text += hasCJK ? "。" : "."
+    }
+    return text
+  }
+
+  // 备选城市与名言标签
+  const cityCandidates = [
+    "北京",
+    "上海",
+    "广州",
+    "深圳",
+    "杭州",
+    "成都",
+    "重庆",
+    "武汉",
+    "西安",
+    "南京",
+    "天津",
+    "青岛",
+    "厦门",
+    "香港",
+    "台北",
+    "东京",
+    "首尔",
+    "新加坡",
+    "伦敦",
+    "纽约",
+    "巴黎",
+    "悉尼",
+    "柏林",
+  ]
+
+  const quoteTags = [
+    "inspirational",
+    "wisdom",
+    "life",
+    "success",
+    "happiness",
+    "friendship",
+    "education",
+    "leadership",
+    "technology",
+  ]
+
+  const fetchWeatherForCity = async (cityName: string) => {
+    const geoRes = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=zh`
+    )
+    const geo = await geoRes.json()
+    const item = geo?.results?.[0]
+    if (!item) return
+    const { latitude, longitude, name } = item
+    const weatherRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&timezone=auto`
+    )
+    const weatherData = await weatherRes.json()
+    const cw = weatherData?.current_weather
+    if (cw) {
+      setWeather({
+        temperature: cw.temperature,
+        weatherCode: cw.weathercode,
+        windspeed: cw.windspeed,
+        city: name || cityName,
+      })
+    }
+  }
+
+  const fetchQuoteByTag = async (tag: string) => {
+    const setFallback = () => {
+      setQuote("保持热爱，奔赴山海。")
+      setQuoteAuthor("")
+    }
+
+    // 统一的超时 fetch
+    const timedFetch = async (url: string, timeoutMs = 3000) => {
+      const controller = new AbortController()
+      const id = setTimeout(() => controller.abort(), timeoutMs)
+      try {
+        const res = await fetch(url, { signal: controller.signal })
+        return res
+      } finally {
+        clearTimeout(id)
+      }
+    }
+
+    // 1) Quotable（英语，带标签）
+    try {
+      const res = await timedFetch(`https://api.quotable.io/random?tags=${encodeURIComponent(tag)}`)
+      if (res.ok) {
+        const data = await res.json()
+        const content = formatQuote((data?.content ?? "").toString())
+        const author = (data?.author ?? "").toString().trim()
+        if (content) {
+          setQuote(content)
+          setQuoteAuthor(author)
+          return
+        }
+      }
+    } catch {}
+
+    // 2) DummyJSON（英语）
+    try {
+      const res = await timedFetch("https://dummyjson.com/quotes/random")
+      if (res.ok) {
+        const data = await res.json()
+        const content = formatQuote((data?.quote ?? "").toString())
+        const author = (data?.author ?? "").toString().trim()
+        if (content) {
+          setQuote(content)
+          setQuoteAuthor(author)
+          return
+        }
+      }
+    } catch {}
+
+    // 3) 一言（中文）
+    try {
+      const res = await timedFetch("https://v1.hitokoto.cn/?encode=json")
+      if (res.ok) {
+        const data = await res.json()
+        const content = formatQuote((data?.hitokoto ?? "").toString())
+        const author = (data?.from_who ?? data?.from ?? "").toString().trim()
+        if (content) {
+          setQuote(content)
+          setQuoteAuthor(author)
+          return
+        }
+      }
+    } catch {}
+
+    // 兜底
+    setFallback()
+  }
+
+  const refreshQuoteAndWeather = async () => {
+    // 随机城市与标签
+    const city = cityCandidates[Math.floor(Math.random() * cityCandidates.length)]
+    const tag = quoteTags[Math.floor(Math.random() * quoteTags.length)]
+    try {
+      await Promise.allSettled([fetchWeatherForCity(city), fetchQuoteByTag(tag)])
+    } catch {
+      // ignore
+    }
+  }
+
+  useEffect(() => {
+    // 首次加载也随机一次
+    refreshQuoteAndWeather()
+  }, [])
+
   const handleAnswerSelect = (answer: string) => {
     if (selectedAnswer || showResult) return
 
@@ -479,6 +673,8 @@ export default function FlashcardPage() {
     setCurrentCard(randomCard)
     setSelectedAnswer(null)
     setShowResult(false)
+    // 每次抽卡时刷新天气与名言
+    void refreshQuoteAndWeather()
   }
 
   const resetGame = () => {
@@ -510,6 +706,24 @@ export default function FlashcardPage() {
             </div>
 
             <div className="flex items-center gap-6">
+              {/* Weather & Quote */}
+              <div className="hidden md:flex flex-col items-end text-right text-sm md:text-base text-muted-foreground max-w-[480px] font-semibold">
+                <span className="truncate">
+                  {weather
+                    ? `${weather.city ? weather.city + " · " : ""}${Math.round(weather.temperature)}°C · ${
+                        weatherCodeMap[weather.weatherCode] ?? "天气"
+                      }`
+                    : "获取天气中…"}
+                </span>
+                <span className="whitespace-normal break-words" title={quote}>
+                  {quote || "加载名言中…"}
+                </span>
+                {quoteAuthor ? (
+                  <span className="text-xs md:text-sm font-normal opacity-80 whitespace-normal break-words">
+                    {`— ${quoteAuthor}`}
+                  </span>
+                ) : null}
+              </div>
               <div className="flex items-center gap-2 text-accent">
                 <Trophy className="w-5 h-5" />
                 <span className="font-semibold font-[var(--font-dm-sans)]">{score}</span>
