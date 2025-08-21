@@ -16,30 +16,30 @@
    - 推荐使用 Node 18+ / 20+ / 22+
    - Windows PowerShell（当前仓库已验证）
    
-   使用 pnpm：
-   ```bash
-   pnpm install --legacy-peer-deps
-   ```
+   使用 npm：
+   \`\`\`bash
+   npm install --legacy-peer-deps
+   \`\`\`
 
 2. 启动开发服务器
-   ```bash
-   pnpm dev
-   ```
+   \`\`\`bash
+   npm run dev
+   \`\`\`
    打开浏览器访问 `http://localhost:3000`
 
 3. 生产构建（可选）
-   ```bash
-   pnpm build
-   pnpm start
-   ```
+   \`\`\`bash
+   npm run build
+   npm start
+   \`\`\`
 
 ### 常见问题
 
 - 依赖冲突（ERESOLVE）
   - 如遇到 `vaul` 与 React 19 的 peer 依赖冲突，已在本项目中移除 `vaul`，请使用：
-    ```bash
-    pnpm install --legacy-peer-deps
-    ```
+    \`\`\`bash
+    npm install --legacy-peer-deps
+    \`\`\`
 
 - 外网名言 API 无法访问 / 证书报错
   - 已实现多源回退（Quotable → DummyJSON → 一言），并带超时与兜底文案
