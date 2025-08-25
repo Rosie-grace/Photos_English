@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { BookOpen, RotateCcw, Trophy, Target, Zap, CheckCircle, XCircle, Shuffle, Loader2 } from "lucide-react"
-import { AIChat } from "@/components/ai-chat"
+import { BookOpen, RotateCcw, Trophy, Target, Zap, CheckCircle, XCircle, Shuffle } from "lucide-react"
 
 const wordDatabase = [
   // 水果类
@@ -453,8 +452,19 @@ export default function FlashcardPage() {
   const [showResult, setShowResult] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
   const [learnedWords, setLearnedWords] = useState<number[]>([])
-  const [aiExplanation, setAiExplanation] = useState<string>("")
-  const [isLoadingExplanation, setIsLoadingExplanation] = useState(false)
+
+  // Weather & Quote states
+  const [quote, setQuote] = useState<string>("")
+  const [quoteAuthor, setQuoteAuthor] = useState<string>("")
+  const [weather, setWeather] = useState<
+    | {
+        temperature: number
+        weatherCode: number
+        windspeed?: number
+        city?: string
+      }
+    | null
+  >(null)
 
   const weatherCodeMap: Record<number, string> = {
     0: "晴",
@@ -480,10 +490,11 @@ export default function FlashcardPage() {
     99: "雷雨伴冰雹",
   }
 
+  // Quote formatting helpers
   const formatQuote = (raw: string): string => {
     let text = (raw || "").trim().replace(/\s+/g, " ")
     if (!text) return "保持热爱，奔赴山海。"
-    const endsWithPunct = /[.!?。！？…]$/.test(text)
+    const endsWithPunct = /[\.!?。！？…]$/.test(text)
     if (!endsWithPunct) {
       const hasCJK = /[\u4e00-\u9fff]/.test(text)
       text += hasCJK ? "。" : "."
@@ -491,6 +502,7 @@ export default function FlashcardPage() {
     return text
   }
 
+  // 备选城市与名言标签
   const cityCandidates = [
     "北京",
     "上海",
@@ -531,14 +543,14 @@ export default function FlashcardPage() {
 
   const fetchWeatherForCity = async (cityName: string) => {
     const geoRes = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=zh`,
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=zh`
     )
     const geo = await geoRes.json()
     const item = geo?.results?.[0]
     if (!item) return
     const { latitude, longitude, name } = item
     const weatherRes = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&timezone=auto`,
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&timezone=auto`
     )
     const weatherData = await weatherRes.json()
     const cw = weatherData?.current_weather
@@ -558,6 +570,7 @@ export default function FlashcardPage() {
       setQuoteAuthor("")
     }
 
+    // 统一的超时 fetch
     const timedFetch = async (url: string, timeoutMs = 3000) => {
       const controller = new AbortController()
       const id = setTimeout(() => controller.abort(), timeoutMs)
@@ -569,6 +582,7 @@ export default function FlashcardPage() {
       }
     }
 
+    // 1) Quotable（英语，带标签）
     try {
       const res = await timedFetch(`https://api.quotable.io/random?tags=${encodeURIComponent(tag)}`)
       if (res.ok) {
@@ -583,6 +597,7 @@ export default function FlashcardPage() {
       }
     } catch {}
 
+    // 2) DummyJSON（英语）
     try {
       const res = await timedFetch("https://dummyjson.com/quotes/random")
       if (res.ok) {
@@ -597,6 +612,7 @@ export default function FlashcardPage() {
       }
     } catch {}
 
+    // 3) 一言（中文）
     try {
       const res = await timedFetch("https://v1.hitokoto.cn/?encode=json")
       if (res.ok) {
@@ -611,10 +627,12 @@ export default function FlashcardPage() {
       }
     } catch {}
 
+    // 兜底
     setFallback()
   }
 
   const refreshQuoteAndWeather = async () => {
+    // 随机城市与标签
     const city = cityCandidates[Math.floor(Math.random() * cityCandidates.length)]
     const tag = quoteTags[Math.floor(Math.random() * quoteTags.length)]
     try {
@@ -624,41 +642,9 @@ export default function FlashcardPage() {
     }
   }
 
-  const generateAIExplanation = async (itemName: string, chineseName: string) => {
-    setIsLoadingExplanation(true)
-    try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: "user",
-              content: `请用简洁的中文解释"${chineseName}"(${itemName})这个物品，包括它的特点、用途或意义。请控制在50字以内。`,
-            },
-          ],
-        }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        const aiMessage = data.choices?.[0]?.message?.content || "暂无解释"
-        setAiExplanation(aiMessage)
-      } else {
-        setAiExplanation("获取解释失败")
-      }
-    } catch (error) {
-      console.error("Error generating AI explanation:", error)
-      setAiExplanation("网络错误，无法获取解释")
-    } finally {
-      setIsLoadingExplanation(false)
-    }
-  }
-
   useEffect(() => {
-    generateAIExplanation(currentCard.correct, currentCard.chinese)
+    // 首次加载也随机一次
+    refreshQuoteAndWeather()
   }, [])
 
   const handleAnswerSelect = (answer: string) => {
@@ -687,7 +673,7 @@ export default function FlashcardPage() {
     setCurrentCard(randomCard)
     setSelectedAnswer(null)
     setShowResult(false)
-    generateAIExplanation(randomCard.correct, randomCard.chinese)
+    // 每次抽卡时刷新天气与名言
     void refreshQuoteAndWeather()
   }
 
@@ -699,20 +685,9 @@ export default function FlashcardPage() {
     setSelectedAnswer(null)
     setShowResult(false)
     setCurrentCard(wordDatabase[0])
-    generateAIExplanation(wordDatabase[0].correct, wordDatabase[0].chinese)
   }
 
   const progressPercentage = (learnedWords.length / wordDatabase.length) * 100
-
-  const [weather, setWeather] = useState<{
-    temperature: number
-    weatherCode: number
-    windspeed?: number
-    city?: string
-  } | null>(null)
-
-  const [quote, setQuote] = useState<string>("")
-  const [quoteAuthor, setQuoteAuthor] = useState<string>("")
 
   return (
     <div className="min-h-screen bg-background">
@@ -800,19 +775,6 @@ export default function FlashcardPage() {
                   {currentCard.category}
                 </Badge>
 
-                <div className="w-full px-2 mb-4">
-                  {isLoadingExplanation ? (
-                    <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-sm">生成解释中...</span>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground leading-relaxed font-[var(--font-dm-sans)] break-words">
-                      {aiExplanation}
-                    </p>
-                  )}
-                </div>
-
                 {showResult && (
                   <div className="flex items-center gap-2 mt-4">
                     {isCorrect ? (
@@ -893,9 +855,6 @@ export default function FlashcardPage() {
           </Card>
         </div>
       </div>
-
-      {/* AI聊天组件 */}
-      <AIChat currentWord={currentCard} />
     </div>
   )
 }
